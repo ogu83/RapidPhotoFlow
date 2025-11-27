@@ -1,5 +1,6 @@
 using MediatR;
 using RapidPhotoFlow.Application.Abstractions.Storage;
+using RapidPhotoFlow.Application.Photos.Commands.DeletePhoto;
 using RapidPhotoFlow.Application.Photos.Commands.UploadPhotos;
 using RapidPhotoFlow.Application.Photos.Queries.GetPhotoDetails;
 using RapidPhotoFlow.Application.Photos.Queries.ListPhotos;
@@ -94,6 +95,19 @@ public static class PhotosEndpoints
         })
         .WithName("GetPhotoFile")
         .WithDescription("Get the actual photo file/image");
+
+        // Delete photo
+        group.MapDelete("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
+        {
+            var command = new DeletePhotoCommand(id);
+            var result = await mediator.Send(command, ct);
+
+            return result.Success
+                ? Results.Ok(result)
+                : Results.NotFound(result);
+        })
+        .WithName("DeletePhoto")
+        .WithDescription("Delete a photo by ID");
 
         return app;
     }

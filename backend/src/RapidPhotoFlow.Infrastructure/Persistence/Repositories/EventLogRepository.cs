@@ -28,5 +28,14 @@ public class EventLogRepository : IEventLogRepository
     {
         await _context.EventLogEntries.AddAsync(entry, cancellationToken);
     }
+
+    public async Task DeleteByPhotoIdAsync(Guid photoId, CancellationToken cancellationToken = default)
+    {
+        var entries = await _context.EventLogEntries
+            .Where(e => e.PhotoId == photoId)
+            .ToListAsync(cancellationToken);
+
+        _context.EventLogEntries.RemoveRange(entries);
+    }
 }
 

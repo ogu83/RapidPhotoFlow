@@ -9,5 +9,6 @@ public interface IEventLogRepository
 {
     Task<IReadOnlyList<EventLogEntry>> GetByPhotoIdAsync(Guid photoId, CancellationToken cancellationToken = default);
     Task AddAsync(EventLogEntry entry, CancellationToken cancellationToken = default);
+    Task DeleteByPhotoIdAsync(Guid photoId, CancellationToken cancellationToken = default);
 }
 

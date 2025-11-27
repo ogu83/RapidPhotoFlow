@@ -11,6 +11,7 @@ public interface IPhotoRepository
     Task<IReadOnlyList<Photo>> GetAllAsync(PhotoStatus? status = null, CancellationToken cancellationToken = default);
     Task AddAsync(Photo photo, CancellationToken cancellationToken = default);
     Task UpdateAsync(Photo photo, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Photo photo, CancellationToken cancellationToken = default);
     Task<Photo?> GetNextQueuedAsync(CancellationToken cancellationToken = default);
 }
 

@@ -77,5 +77,15 @@ export const photoApi = {
     );
     return photoEventArraySchema.parse(response.data);
   },
+
+  /**
+   * Delete a photo by ID.
+   */
+  async deletePhoto(id: string): Promise<{ success: boolean; message: string }> {
+    const response = await apiClient.delete<{ success: boolean; message: string }>(
+      `/api/photos/${id}`
+    );
+    return response.data;
+  },
 };
 

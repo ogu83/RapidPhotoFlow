@@ -47,6 +47,12 @@ public class PhotoRepository : IPhotoRepository
         return Task.CompletedTask;
     }
 
+    public Task DeleteAsync(Photo photo, CancellationToken cancellationToken = default)
+    {
+        _context.Photos.Remove(photo);
+        return Task.CompletedTask;
+    }
+
     public async Task<Photo?> GetNextQueuedAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Photos
