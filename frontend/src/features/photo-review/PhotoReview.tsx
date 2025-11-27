@@ -1,9 +1,10 @@
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, History } from "lucide-react";
+import { ArrowLeft, History, ImageIcon } from "lucide-react";
 import { Card, CardContent, CardHeader } from "../../lib/ui/Card";
 import { Spinner } from "../../lib/ui/Spinner";
 import { PhotoDetailHeader } from "./components/PhotoDetailHeader";
 import { PhotoEventTimeline } from "./components/PhotoEventTimeline";
+import { PhotoPreview } from "./components/PhotoPreview";
 import { usePhotoDetail } from "./hooks/usePhotoDetail";
 import { usePhotoEvents } from "./hooks/usePhotoEvents";
 
@@ -57,6 +58,21 @@ export function PhotoReview() {
         </CardContent>
       </Card>
 
+      {/* Photo Preview */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <ImageIcon className="w-5 h-5 text-primary-400" />
+            <h2 className="text-lg font-semibold text-slate-100">
+              Photo Preview
+            </h2>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <PhotoPreview photo={photo} />
+        </CardContent>
+      </Card>
+
       {/* Event Timeline */}
       <Card>
         <CardHeader>
@@ -85,4 +101,3 @@ export function PhotoReview() {
     </div>
   );
 }
-

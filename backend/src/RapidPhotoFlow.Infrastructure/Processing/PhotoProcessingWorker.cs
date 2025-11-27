@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -30,7 +31,7 @@ public class PhotoProcessingWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Photo Processing Worker started");
+        _logger.LogInformation("Photo Processing Worker started and listening for photos");
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -49,7 +50,7 @@ public class PhotoProcessingWorker : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing photo from queue");
+                _logger.LogError(ex, "Unexpected error in photo processing loop");
                 await Task.Delay(1000, stoppingToken);
             }
         }
@@ -59,6 +60,8 @@ public class PhotoProcessingWorker : BackgroundService
 
     private async Task ProcessPhotoAsync(PhotoId photoId, CancellationToken cancellationToken)
     {
+        var stopwatch = Stopwatch.StartNew();
+        
         using var scope = _scopeFactory.CreateScope();
         var photoRepository = scope.ServiceProvider.GetRequiredService<IPhotoRepository>();
         var eventLogRepository = scope.ServiceProvider.GetRequiredService<IEventLogRepository>();
@@ -68,15 +71,19 @@ public class PhotoProcessingWorker : BackgroundService
 
         if (photo is null)
         {
-            _logger.LogWarning("Photo {PhotoId} not found for processing", photoId);
+            _logger.LogWarning("Photo not found for processing - PhotoId: {PhotoId}", photoId.Value);
             return;
         }
 
         if (photo.Status != PhotoStatus.Queued)
         {
-            _logger.LogWarning("Photo {PhotoId} is not in Queued status, skipping", photoId);
+            _logger.LogWarning("Photo skipped - not in Queued status - PhotoId: {PhotoId}, FileName: {FileName}, CurrentStatus: {Status}",
+                photoId.Value, photo.FileName, photo.Status);
             return;
         }
+
+        _logger.LogInformation("Processing started - PhotoId: {PhotoId}, FileName: {FileName}, Size: {SizeBytes} bytes, ContentType: {ContentType}",
+            photoId.Value, photo.FileName, photo.SizeBytes, photo.ContentType);
 
         var now = DateTimeOffset.UtcNow;
 
@@ -90,17 +97,10 @@ public class PhotoProcessingWorker : BackgroundService
                 cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("Started processing photo {PhotoId}: {FileName}", photoId, photo.FileName);
-
             // Simulate processing with random delay (2-5 seconds)
-            var delay = _random.Next(2000, 5000);
-            await Task.Delay(delay, cancellationToken);
-
-            // Simulate occasional failures (10% chance)
-            if (_random.Next(100) < 10)
-            {
-                throw new InvalidOperationException("Simulated processing failure");
-            }
+            var processingDelay = _random.Next(2000, 5000);
+            _logger.LogDebug("Simulating processing delay - PhotoId: {PhotoId}, DelayMs: {DelayMs}", photoId.Value, processingDelay);
+            await Task.Delay(processingDelay, cancellationToken);
 
             // Mark as processed
             var completedAt = DateTimeOffset.UtcNow;
@@ -111,11 +111,15 @@ public class PhotoProcessingWorker : BackgroundService
                 cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("Completed processing photo {PhotoId}: {FileName}", photoId, photo.FileName);
+            stopwatch.Stop();
+            _logger.LogInformation("Processing completed successfully - PhotoId: {PhotoId}, FileName: {FileName}, Duration: {DurationMs}ms",
+                photoId.Value, photo.FileName, stopwatch.ElapsedMilliseconds);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            _logger.LogError(ex, "Failed to process photo {PhotoId}", photoId);
+            stopwatch.Stop();
+            _logger.LogError(ex, "Processing failed - PhotoId: {PhotoId}, FileName: {FileName}, Duration: {DurationMs}ms, Error: {ErrorMessage}",
+                photoId.Value, photo.FileName, stopwatch.ElapsedMilliseconds, ex.Message);
 
             var failedAt = DateTimeOffset.UtcNow;
             photo.MarkFailed(ex.Message, failedAt);
@@ -127,4 +131,3 @@ public class PhotoProcessingWorker : BackgroundService
         }
     }
 }
-

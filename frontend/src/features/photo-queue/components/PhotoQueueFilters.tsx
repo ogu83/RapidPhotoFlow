@@ -7,7 +7,6 @@ interface PhotoQueueFiltersProps {
 
 const STATUS_OPTIONS: { value: PhotoStatus | "all"; label: string }[] = [
   { value: "all", label: "All Photos" },
-  { value: "Uploaded", label: "Uploaded" },
   { value: "Queued", label: "Queued" },
   { value: "Processing", label: "Processing" },
   { value: "Processed", label: "Processed" },

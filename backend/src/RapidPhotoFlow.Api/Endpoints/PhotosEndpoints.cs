@@ -1,4 +1,5 @@
 using MediatR;
+using RapidPhotoFlow.Application.Abstractions.Storage;
 using RapidPhotoFlow.Application.Photos.Commands.UploadPhotos;
 using RapidPhotoFlow.Application.Photos.Queries.GetPhotoDetails;
 using RapidPhotoFlow.Application.Photos.Queries.ListPhotos;
@@ -71,7 +72,29 @@ public static class PhotosEndpoints
         .WithName("GetPhoto")
         .WithDescription("Get photo details by ID");
 
+        // Get photo file (image)
+        group.MapGet("/{id:guid}/file", async (Guid id, IMediator mediator, IPhotoStorage photoStorage, CancellationToken ct) =>
+        {
+            var query = new GetPhotoDetailsQuery(id);
+            var photo = await mediator.Send(query, ct);
+
+            if (photo is null)
+            {
+                return Results.NotFound();
+            }
+
+            var stream = await photoStorage.GetAsync(photo.StoragePath, ct);
+            
+            if (stream is null)
+            {
+                return Results.NotFound("Photo file not found");
+            }
+
+            return Results.File(stream, photo.ContentType, photo.FileName);
+        })
+        .WithName("GetPhotoFile")
+        .WithDescription("Get the actual photo file/image");
+
         return app;
     }
 }
-
