@@ -38,6 +38,7 @@ public sealed class UploadPhotosCommandHandler : IRequestHandler<UploadPhotosCom
         CancellationToken cancellationToken)
     {
         var results = new List<PhotoDto>();
+        var photoIdsToQueue = new List<PhotoId>();
 
         foreach (var item in request.Photos)
         {
@@ -59,7 +60,7 @@ public sealed class UploadPhotosCommandHandler : IRequestHandler<UploadPhotosCom
                 storagePath,
                 now);
 
-            // Queue for processing
+            // Queue for processing (sets status)
             photo.QueueForProcessing();
 
             // Persist the photo
@@ -74,16 +75,22 @@ public sealed class UploadPhotosCommandHandler : IRequestHandler<UploadPhotosCom
                 EventLogEntry.Create(photoId.Value, "Queued", $"Photo '{item.FileName}' queued for processing", now),
                 cancellationToken);
 
-            // Add to processing queue
-            await _processingQueue.EnqueueAsync(photoId, cancellationToken);
-
             // Clear domain events after handling
             photo.ClearDomainEvents();
 
             results.Add(MapToDto(photo));
+            photoIdsToQueue.Add(photoId);
         }
 
+        // IMPORTANT: Save to database BEFORE enqueueing to avoid race condition
+        // where worker tries to process photos that don't exist yet
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        // Now that photos are persisted, add them to the processing queue
+        foreach (var photoId in photoIdsToQueue)
+        {
+            await _processingQueue.EnqueueAsync(photoId, cancellationToken);
+        }
 
         return results;
     }
@@ -100,4 +107,3 @@ public sealed class UploadPhotosCommandHandler : IRequestHandler<UploadPhotosCom
         photo.ProcessingCompletedAt,
         photo.ErrorMessage);
 }
-
