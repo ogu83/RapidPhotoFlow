@@ -6,7 +6,8 @@ interface PhotoPreviewProps {
   photo: PhotoDto;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:7001";
+// In Docker, VITE_API_BASE_URL is empty string - nginx proxies /api/* to backend
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:7001";
 
 export function PhotoPreview({ photo }: PhotoPreviewProps) {
   const [isLoading, setIsLoading] = useState(true);

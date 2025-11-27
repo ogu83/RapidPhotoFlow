@@ -1,0 +1,67 @@
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: rapidphotoflow-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: RapidPhotoFlow
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Postgres2839*
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - rapidphotoflow-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d RapidPhotoFlow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # .NET Backend API
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rapidphotoflow-api
+    restart: unless-stopped
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=RapidPhotoFlow;Username=postgres;Password=Postgres2839*
+      - Storage__UploadPath=/app/uploads
+      - Cors__AllowedOrigins__0=http://localhost:7002
+      - Cors__AllowedOrigins__1=http://ui
+    volumes:
+      - uploads_data:/app/uploads
+      - logs_data:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - rapidphotoflow-network
+
+  # React Frontend UI
+  ui:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # API calls go through nginx proxy, so use relative URL
+        VITE_API_BASE_URL: ""
+    container_name: rapidphotoflow-ui
+    restart: unless-stopped
+    ports:
+      - "7002:80"
+    depends_on:
+      - api
+    networks:
+      - rapidphotoflow-network
+
+networks:
+  rapidphotoflow-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  uploads_data:
+  logs_data:
+

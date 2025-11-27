@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:7001";
+// In Docker, VITE_API_BASE_URL is empty string - nginx proxies /api/* to backend
+// In development, it's http://localhost:7001
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:7001";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
