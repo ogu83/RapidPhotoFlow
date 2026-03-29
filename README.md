@@ -11,6 +11,8 @@ A lightweight photo upload, processing, and review workflow application built as
 
 ### Project Video
 
+[Rapid Photo Flow in YouTube](https://youtu.be/k1vtT0AukxE)
+
 RapidPhotoFlow demonstrates a complete full-stack application with:
 
 - **Photo Upload**: Drag-and-drop multi-file upload interface
