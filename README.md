@@ -10,7 +10,6 @@ A lightweight photo upload, processing, and review workflow application built as
 ## 🎯 Project Overview
 
 ### Project Video
-https://teamfront-my.sharepoint.com/:v:/g/personal/oguz_arborgold_com/EWHGdWLLAMlCl15hgFz785UBzEphIcm6j6Jy4F275k4gcw?e=ThUASB
 
 RapidPhotoFlow demonstrates a complete full-stack application with:
 
